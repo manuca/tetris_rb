@@ -1,4 +1,4 @@
 require './lib/game'
-require './lib/piece'
 
-Game.new.play
+game = Game.new
+game.iterate while !over?

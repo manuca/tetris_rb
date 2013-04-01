@@ -1,29 +1,33 @@
 # Game controller
-class Game
-  def initialize(screen)
-    @current_piece = nil
-    @over = false
-    @brick_layout = BrickLayout.new
-    @screen = screen
-    @screen.layout = @brick_layout
-  end
+require './lib/bricks'
+require './lib/piece'
 
-  def play
-    iterate while !over?
+class Game
+  attr_reader :piece_generator
+
+  def initialize(screen, piece_generator, keyboard_adapter = nil)
+    @keyboard_adapter = keyboard_adapter
+    @current_piece = nil
+
+    @over = false
+    @bricks = Bricks.new
+
+    @screen = screen
+    @screen.bricks = @bricks
+
+    @time = 0
+
+    @piece_generator = piece_generator
   end
 
   def iterate
-    next_piece if @current_piece.nil?
-
-    if @brick_layout.hit_bottom?(@current_piece)
-      @brick_layout.fix_piece(@current_piece)
-      @current_piece = nil
+    if iterate_horizontal?
+      horizontal_move
     else
-      @current_piece.advance_down
-      @brick_layout.current_piece(@current_piece)
-      @over = true if @brick_layout.hit_top?
+      vertical_move
     end
 
+    @time = (@time + 1) % 4
     @screen.redraw
   end
 
@@ -31,8 +35,36 @@ class Game
     @over
   end
 
+  private
+  def horizontal_move
+    unless keyboard_adapter.nil?
+      if keyboard_adapter.left?
+        @current_piece.left
+      elsif keyboard_adapter.right?
+        @current_piece.right
+      end
+    end
+  end
+
+  def vertical_move
+    next_piece if @current_piece.nil?
+
+    if @current_piece.down_possible?
+      @current_piece.down
+    else
+      @current_piece = nil 
+    end
+
+    @bricks.remove_complete_lines
+    @over = true if @bricks.hit_top?
+  end
+
+  def iterate_horizontal?
+    @time != 0
+  end
+
   def next_piece
-    @current_piece = Piece.next
-    @current_piece.brick_layout = @brick_layout
+    @current_piece = piece_generator.next
+    @current_piece.bricks = @bricks
   end
 end

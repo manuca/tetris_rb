@@ -1,0 +1,2 @@
+class Bricks
+end
