@@ -1,23 +1,22 @@
-# Game controller
 require './lib/bricks'
-require './lib/piece'
+require './lib/tetrimino'
 
 class Game
-  attr_reader :piece_generator
+  attr_reader :tetrimino_generator, :keyboard_adapter
 
-  def initialize(screen, piece_generator, keyboard_adapter = nil)
+  def initialize(screen, tetrimino_generator, keyboard_adapter = nil)
     @keyboard_adapter = keyboard_adapter
-    @current_piece = nil
+    @current_tetrimino = nil
 
     @over = false
-    @bricks = Bricks.new
+    @bricks = Bricks.new(10, 22)
 
     @screen = screen
     @screen.bricks = @bricks
 
     @time = 0
 
-    @piece_generator = piece_generator
+    @tetrimino_generator = tetrimino_generator
   end
 
   def iterate
@@ -39,20 +38,20 @@ class Game
   def horizontal_move
     unless keyboard_adapter.nil?
       if keyboard_adapter.left?
-        @current_piece.left
+        @current_tetrimino.left
       elsif keyboard_adapter.right?
-        @current_piece.right
+        @current_tetrimino.right
       end
     end
   end
 
   def vertical_move
-    next_piece if @current_piece.nil?
+    next_tetrimino if @current_tetrimino.nil?
 
-    if @current_piece.down_possible?
-      @current_piece.down
+    if @current_tetrimino.down_possible?
+      @current_tetrimino.down!
     else
-      @current_piece = nil 
+      @current_tetrimino = nil 
     end
 
     @bricks.remove_complete_lines
@@ -63,8 +62,8 @@ class Game
     @time != 0
   end
 
-  def next_piece
-    @current_piece = piece_generator.next
-    @current_piece.bricks = @bricks
+  def next_tetrimino
+    @current_tetrimino = tetrimino_generator.next
+    @current_tetrimino.bricks = @bricks
   end
 end
